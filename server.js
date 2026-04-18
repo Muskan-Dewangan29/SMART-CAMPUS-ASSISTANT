@@ -10,9 +10,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-if (!GEMINI_API_KEY) {
-  console.warn("⚠️ GEMINI_API_KEY is missing. Chatbot will not work!");
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+console.log("KEY CHECK:", OPENROUTER_API_KEY);
+if (!OPENROUTER_API_KEY) {
+  console.warn("⚠️ OPENROUTER_API_KEY is missing. Chatbot will not work!");
 }
 
 // Load college data
@@ -76,48 +77,67 @@ ${question}
 `;
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+    `https://openrouter.ai/api/v1/chat/completions`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "http://localhost:5000",
+        "X-Title": "College Assistant"
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: safePrompt }] }]
+        model: "mistralai/mistral-7b-instruct",
+        messages: [
+          { role: "system", content: "You are a helpful college assistant." },
+          { role: "user", content: safePrompt }
+        ]
       })
     }
   );
 
-  const data = await response.json();
-  console.log("Gemini raw response:", JSON.stringify(data, null, 2));
+  if (!response.ok) {
+  const errText = await response.text();
+  console.error("❌ OPENROUTER ERROR:", errText);
+  return res.json({
+    reply: "❌ API ERROR → " + errText
+  });
+}
 
-  let reply = "I couldn't find a clear answer. Try rephrasing your question.";
+const data = await response.json();
+console.log("✅ FULL RESPONSE:", JSON.stringify(data, null, 2));
+  
+  console.log("FULL API RESPONSE:", JSON.stringify(data, null, 2));
 
-  if (data.candidates?.length) {
-    reply = data.candidates[0]?.content?.parts?.[0]?.text || reply;
+let reply = "";
 
-    // Smart suggestions if data missing
-    if (
-      reply.toLowerCase().includes("don't have information") ||
-      reply.toLowerCase().includes("no information") ||
-      reply.toLowerCase().includes("not available")
-    ) {
-      const suggestions = SUGGESTED_TOPICS.map(t => `• ${t}`).join("\n");
-      reply = `${reply}\n\n🔎 You can ask about:\n${suggestions}`;
-    }
+if (data.choices && data.choices.length > 0) {
+  const content = data.choices[0]?.message?.content;
+
+  if (content && content.trim().length > 0) {
+    reply = content.trim();
   }
+}
+
+// fallback only if EMPTY
+if (!reply) {
+  const suggestions = SUGGESTED_TOPICS.map(t => `• ${t}`).join("\n");
+  reply = "⚠️ I couldn't find an exact answer.\n\n🔎 You can ask about:\n" + suggestions;
+}
 
   res.json({ reply });
 
 } catch (err) {
-  console.error("AI fetch error:", err);
-  res.json({
-    reply: "⚠️ AI temporarily unavailable. Please try again later."
-  });
+  console.error("AI fetch error:", err.message);
+ res.json({
+  reply: "❌ ERROR: " + err.message
+});
 }
 
 
 
 
-    res.json({ reply });
+    
 
   } catch (error) {
     console.error(error);
