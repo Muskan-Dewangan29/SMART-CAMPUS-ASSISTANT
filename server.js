@@ -10,11 +10,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-console.log("KEY CHECK:", OPENROUTER_API_KEY);
-if (!OPENROUTER_API_KEY) {
-  console.warn("⚠️ OPENROUTER_API_KEY is missing. Chatbot will not work!");
-}
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 // Load college data
 const collegeData = fs.readFileSync("./college-info.md", "utf-8");
@@ -61,83 +57,49 @@ ${question}
 `;
 
 
-try {
-  // Limit collegeData length to avoid quota issues
-  const safePrompt = `
-You are a Smart College Assistant for SSIPMT.
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: prompt }]
+            }
+          ]
+        })
+      }
+    );
 
-PRIMARY RULE:
-- Answer using the COLLEGE DATA below if possible.
+    const data = await response.json();
+    console.log("Gemini raw response:", JSON.stringify(data, null, 2));
 
-COLLEGE DATA:
-${collegeData.slice(0, 5000)}   // <-- limit first 5000 chars
+    let reply = "No response";
 
-QUESTION:
-${question}
-`;
+if (data.candidates && data.candidates.length > 0) {
+  reply = data.candidates[0]?.content?.parts?.[0]?.text || "No response";
 
-  const response = await fetch(
-    `https://openrouter.ai/api/v1/chat/completions`,
-    {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "http://localhost:5000",
-        "X-Title": "College Assistant"
-      },
-      body: JSON.stringify({
-        model: "mistralai/mistral-7b-instruct",
-        messages: [
-          { role: "system", content: "You are a helpful college assistant." },
-          { role: "user", content: safePrompt }
-        ]
-      })
-    }
-  );
+  // 🔥 SMART "Did you mean?" SUGGESTIONS
+  if (
+    reply.toLowerCase().includes("don't have information") ||
+    reply.toLowerCase().includes("no information") ||
+    reply.toLowerCase().includes("not available")
+  ) {
+    const suggestions = SUGGESTED_TOPICS
+      .map(topic => `• ${topic}`)
+      .join("\n");
 
-  if (!response.ok) {
-  const errText = await response.text();
-  console.error("❌ OPENROUTER ERROR:", errText);
-  return res.json({
-    reply: "❌ API ERROR → " + errText
-  });
-}
-
-const data = await response.json();
-console.log("✅ FULL RESPONSE:", JSON.stringify(data, null, 2));
-  
-  console.log("FULL API RESPONSE:", JSON.stringify(data, null, 2));
-
-let reply = "";
-
-if (data.choices && data.choices.length > 0) {
-  const content = data.choices[0]?.message?.content;
-
-  if (content && content.trim().length > 0) {
-    reply = content.trim();
+    reply = `${reply}\n\n🔎 You can ask about:\n${suggestions}`;
   }
-}
 
-// fallback only if EMPTY
-if (!reply) {
-  const suggestions = SUGGESTED_TOPICS.map(t => `• ${t}`).join("\n");
-  reply = "⚠️ I couldn't find an exact answer.\n\n🔎 You can ask about:\n" + suggestions;
-}
-
-  res.json({ reply });
-
-} catch (err) {
-  console.error("AI fetch error:", err.message);
- res.json({
-  reply: "❌ ERROR: " + err.message
-});
+} else if (data.promptFeedback?.blockReason) {
+  reply = "⚠️ AI temporarily unavailable. Please try again.";
 }
 
 
 
-
-    
+    res.json({ reply });
 
   } catch (error) {
     console.error(error);
