@@ -71,7 +71,7 @@ if (editingId) {
   setIsTyping(true);
 
   try {
-    const res = await fetch("http://localhost:5000/chat", {
+    fetch("https://sac-uyvi.onrender.com/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question: messageText })
@@ -123,7 +123,7 @@ if (editingId) {
     setIsTyping(true);
 
     try {
-      const res = await fetch("http://localhost:5000/chat", {
+      fetch("https://sac-uyvi.onrender.com/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: messageText })
