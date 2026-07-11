@@ -23,12 +23,10 @@ https://sac-uyvi.onrender.com
 - Render
 - Tailwind CSS
 
-## 📷 Screenshots
-
-(Add screenshots here)
 
 ## 👨‍💻 Contributors
 
 - Muskan Dewangan
-- Teammate 1
-- Teammate 2
+- Anamika
+- Kashifa Fatima
+- Sejal Choudhari
