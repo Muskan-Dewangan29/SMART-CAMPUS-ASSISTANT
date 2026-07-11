@@ -1,2 +1,34 @@
-# SMART-CAMPUS-ASSISTANT
-AI-powered college information chatbot built using React, Express, and Google Gemini API. Features include smart query understanding, persistent chat, and a clean modern UI. Deployed using Vercel (frontend) and Render (backend).
+# 🎓 Smart Campus Assistant (SAC)
+
+An AI-powered chatbot for SSIPMT that helps students with:
+
+- 🎓 Admissions
+- 📚 Courses
+- 💰 Fees
+- 🏠 Hostel
+- 🎯 Placements
+- 🎁 Scholarships
+- 📞 Contact Information
+
+## 🚀 Live Demo
+
+https://sac-uyvi.onrender.com
+
+## 🛠️ Tech Stack
+
+- React + Vite
+- Express.js
+- Node.js
+- Google Gemini API
+- Render
+- Tailwind CSS
+
+## 📷 Screenshots
+
+(Add screenshots here)
+
+## 👨‍💻 Contributors
+
+- Muskan Dewangan
+- Teammate 1
+- Teammate 2
