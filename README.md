@@ -26,7 +26,8 @@ https://sac-uyvi.onrender.com
 
 ## 👨‍💻 Contributors
 
+- Sejal Choudhari
 - Muskan Dewangan
 - Anamika
 - Kashifa Fatima
-- Sejal Choudhari
+  
